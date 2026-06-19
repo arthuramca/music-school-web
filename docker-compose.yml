@@ -1,0 +1,41 @@
+services:
+
+  db:
+    image: postgres:16-alpine
+    container_name: musicschool-db
+    environment:
+      POSTGRES_DB: musicschool
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    container_name: musicschool-api
+    environment:
+      DATABASE_URL: jdbc:postgresql://db:5432/musicschool
+      DATABASE_USER: postgres
+      DATABASE_PASS: postgres
+      JWT_SECRET: troque-por-uma-chave-secreta-longa-em-producao
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    container_name: musicschool-web
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
