@@ -4,6 +4,8 @@ import Layout from './components/Layout'
 import Students from './pages/Students'
 import Agenda from './pages/Agenda'
 import Makeups from './pages/Makeups'
+import Charts from './pages/Charts'
+import Waitlist from './pages/Waitlist'
 
 function PrivateRoute({ children }) {
   return localStorage.getItem('token') ? children : <Navigate to="/login" replace />
@@ -18,6 +20,8 @@ export default function App() {
         <Route path="students" element={<Students />} />
         <Route path="agenda"   element={<Agenda />} />
         <Route path="makeups"  element={<Makeups />} />
+        <Route path="charts"   element={<Charts />} />
+        <Route path="waitlist" element={<Waitlist />} />
       </Route>
     </Routes>
   )
