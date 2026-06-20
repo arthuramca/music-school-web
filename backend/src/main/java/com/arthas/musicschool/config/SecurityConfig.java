@@ -1,6 +1,6 @@
 package com.arthas.musicschool.config;
 
-import com.arthas.musicschool.repository.AppUserRepository;
+import com.arthas.musicschool.security.AppUserDetailsService;
 import com.arthas.musicschool.security.JwtFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -12,8 +12,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
@@ -29,7 +27,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
-    private final AppUserRepository userRepo;
+    private final AppUserDetailsService userDetailsService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -47,20 +45,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public UserDetailsService userDetailsService() {
-        return username -> userRepo.findByUsername(username)
-                .map(u -> org.springframework.security.core.userdetails.User
-                        .withUsername(u.getUsername())
-                        .password(u.getPassword())
-                        .roles(u.getRole())
-                        .build())
-                .orElseThrow(() -> new UsernameNotFoundException("Usuário não encontrado: " + username));
-    }
-
-    @Bean
     public AuthenticationProvider authProvider() {
         var provider = new DaoAuthenticationProvider();
-        provider.setUserDetailsService(userDetailsService());
+        provider.setUserDetailsService(userDetailsService);
         provider.setPasswordEncoder(passwordEncoder());
         return provider;
     }
