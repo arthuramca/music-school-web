@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Search, Plus, FileSpreadsheet, Pencil, Trash2, CreditCard, BookOpen, FileText, X } from 'lucide-react'
 import api from '../api/client'
 import StudentForm from '../components/StudentForm'
 import PaymentsModal from '../components/PaymentsModal'
@@ -8,10 +9,10 @@ import ConfirmDialog from '../components/ConfirmDialog'
 const STATUS_OPTIONS = ['Todos', 'Ativo', 'Inativo', 'Trancado']
 
 const statusBadge = s => ({
-  Ativo:    'bg-green-100 text-green-700',
-  Inativo:  'bg-gray-100 text-gray-600',
-  Trancado: 'bg-yellow-100 text-yellow-700',
-}[s] ?? '')
+  Ativo:    'badge-green',
+  Inativo:  'badge-gray',
+  Trancado: 'badge-yellow',
+}[s] ?? 'badge-gray')
 
 export default function Students() {
   const [students, setStudents] = useState([])
@@ -53,77 +54,124 @@ export default function Students() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {form     && <StudentForm student={form === true ? null : form} onClose={() => setForm(null)} onSave={() => { setForm(null); load() }} />}
       {payments && <PaymentsModal student={payments} onClose={() => setPayments(null)} />}
       {lessons  && <LessonsModal  student={lessons}  onClose={() => setLessons(null)} />}
-      {confirm  && <ConfirmDialog message="Excluir aluno?" onCancel={() => setConfirm(null)} onConfirm={() => { deleteStudent(confirm); setConfirm(null) }} />}
+      {confirm  && <ConfirmDialog message="Tem certeza que deseja excluir este aluno? Esta ação não pode ser desfeita." onCancel={() => setConfirm(null)} onConfirm={() => { deleteStudent(confirm); setConfirm(null) }} />}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <h2 className="text-xl font-bold text-gray-800 flex-1">Alunos</h2>
-        <div className="flex gap-2">
-          <input className="border rounded-lg px-3 py-1.5 text-sm w-52 focus:outline-none focus:ring-2 focus:ring-blue-400"
-            placeholder="Buscar..." value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && load()} />
-          <button onClick={load} className="bg-blue-500 text-white px-3 py-1.5 rounded-lg text-sm hover:bg-blue-600">Buscar</button>
-          <button onClick={() => setQ('') || setStatus('Todos')} className="border px-3 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Limpar</button>
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Alunos</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{students.length} aluno(s) encontrado(s)</p>
         </div>
-        <select className="border rounded-lg px-3 py-1.5 text-sm" value={status} onChange={e => setStatus(e.target.value)}>
-          {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
-        </select>
-        <button onClick={exportXlsx} className="border border-green-500 text-green-600 px-3 py-1.5 rounded-lg text-sm hover:bg-green-50">
-          Exportar .xlsx
-        </button>
-        <button onClick={() => setForm(true)} className="bg-green-500 text-white px-4 py-1.5 rounded-lg text-sm hover:bg-green-600 font-medium">
-          + Novo Aluno
-        </button>
+        <div className="flex items-center gap-3">
+          <button onClick={exportXlsx} className="btn-secondary">
+            <FileSpreadsheet size={16} />
+            Exportar .xlsx
+          </button>
+          <button onClick={() => setForm(true)} className="btn-primary">
+            <Plus size={16} />
+            Novo Aluno
+          </button>
+        </div>
       </div>
 
-      {loading ? (
-        <p className="text-gray-400 text-center py-10">Carregando...</p>
-      ) : (
-        <div className="bg-white rounded-xl shadow overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-[#2c3e50] text-white">
+      {/* Filtros */}
+      <div className="card p-4 flex items-center gap-3">
+        <div className="relative flex-1 max-w-xs">
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input className="input pl-9" placeholder="Buscar aluno, instrumento..."
+            value={q} onChange={e => setQ(e.target.value)} onKeyDown={e => e.key === 'Enter' && load()} />
+        </div>
+        <button onClick={load} className="btn-primary py-2">Buscar</button>
+        {q && <button onClick={() => { setQ(''); load() }} className="text-slate-400 hover:text-slate-600 transition-colors"><X size={16} /></button>}
+        <div className="flex gap-1 ml-auto">
+          {STATUS_OPTIONS.map(s => (
+            <button key={s} onClick={() => setStatus(s)}
+              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                status === s ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}>
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tabela */}
+      <div className="card overflow-hidden">
+        {loading ? (
+          <div className="flex items-center justify-center py-16 text-slate-400 text-sm">Carregando...</div>
+        ) : (
+          <table className="w-full">
+            <thead className="border-b border-slate-200 bg-slate-50">
               <tr>
-                {['Nome','Instrumento','Nível','Professor','Dia/Hora','Status','Mensalidade','Ações'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left font-medium text-xs">{h}</th>
-                ))}
+                <th className="th">Nome</th>
+                <th className="th">Instrumento</th>
+                <th className="th">Nível</th>
+                <th className="th">Professor</th>
+                <th className="th">Horário</th>
+                <th className="th">Status</th>
+                <th className="th">Mensalidade</th>
+                <th className="th text-right">Ações</th>
               </tr>
             </thead>
-            <tbody>
-              {students.map((s, i) => (
-                <tr key={s.id} className={`border-t hover:bg-blue-50 transition-colors ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                  <td className="px-4 py-2.5 font-medium text-blue-600">{s.name}</td>
-                  <td className="px-4 py-2.5">{s.instrument}{s.instrument2 ? ` / ${s.instrument2}` : ''}</td>
-                  <td className="px-4 py-2.5">{s.level}</td>
-                  <td className="px-4 py-2.5">{s.teacher}</td>
-                  <td className="px-4 py-2.5 text-xs text-gray-600">
-                    {s.lessonDay} {s.lessonTime}
-                    {s.lessonDay2 && <><br />{s.lessonDay2} {s.lessonTime2}</>}
+            <tbody className="divide-y divide-slate-100">
+              {students.map(s => (
+                <tr key={s.id} className="hover:bg-slate-50 transition-colors group">
+                  <td className="td font-semibold text-slate-800">{s.name}</td>
+                  <td className="td">
+                    <span className="text-slate-700">{s.instrument}</span>
+                    {s.instrument2 && <span className="text-slate-400 text-xs"> / {s.instrument2}</span>}
                   </td>
-                  <td className="px-4 py-2.5">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusBadge(s.status)}`}>{s.status}</span>
+                  <td className="td text-slate-500">{s.level}</td>
+                  <td className="td text-slate-500">{s.teacher}</td>
+                  <td className="td text-xs text-slate-500">
+                    <span className="font-medium text-slate-600">{s.lessonDay}</span> {s.lessonTime}
+                    {s.lessonDay2 && <><br /><span className="font-medium text-slate-600">{s.lessonDay2}</span> {s.lessonTime2}</>}
                   </td>
-                  <td className="px-4 py-2.5">{s.monthlyFee != null ? `R$ ${s.monthlyFee.toFixed(2)}` : '-'}</td>
-                  <td className="px-4 py-2.5">
-                    <div className="flex gap-1 flex-wrap">
-                      <button onClick={() => setForm(s)}         className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200">Editar</button>
-                      <button onClick={() => setPayments(s)}     className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200">Pag.</button>
-                      <button onClick={() => setLessons(s)}      className="text-xs px-2 py-1 bg-purple-100 text-purple-700 rounded hover:bg-purple-200">Aulas</button>
-                      <button onClick={() => downloadPdf(s.id)}  className="text-xs px-2 py-1 bg-gray-100 text-gray-600 rounded hover:bg-gray-200">PDF</button>
-                      <button onClick={() => setConfirm(s.id)}   className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">Excluir</button>
+                  <td className="td"><span className={statusBadge(s.status)}>{s.status}</span></td>
+                  <td className="td font-medium text-slate-700">
+                    {s.monthlyFee != null ? `R$ ${s.monthlyFee.toFixed(2)}` : <span className="text-slate-400">—</span>}
+                  </td>
+                  <td className="td">
+                    <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                      <ActionBtn icon={Pencil}      color="blue"   title="Editar"      onClick={() => setForm(s)} />
+                      <ActionBtn icon={CreditCard}  color="green"  title="Pagamentos"  onClick={() => setPayments(s)} />
+                      <ActionBtn icon={BookOpen}    color="purple" title="Aulas"       onClick={() => setLessons(s)} />
+                      <ActionBtn icon={FileText}    color="slate"  title="Gerar PDF"   onClick={() => downloadPdf(s.id)} />
+                      <ActionBtn icon={Trash2}      color="red"    title="Excluir"     onClick={() => setConfirm(s.id)} />
                     </div>
                   </td>
                 </tr>
               ))}
-              {students.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-10 text-center text-gray-400">Nenhum aluno encontrado.</td></tr>
-              )}
             </tbody>
           </table>
-        </div>
-      )}
-      <p className="text-xs text-gray-400">{students.length} aluno(s)</p>
+        )}
+        {!loading && students.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 text-slate-400 space-y-2">
+            <Search size={32} className="text-slate-300" />
+            <p className="text-sm">Nenhum aluno encontrado</p>
+          </div>
+        )}
+      </div>
     </div>
+  )
+}
+
+function ActionBtn({ icon: Icon, color, title, onClick }) {
+  const colors = {
+    blue:   'text-blue-500 hover:bg-blue-50',
+    green:  'text-emerald-500 hover:bg-emerald-50',
+    purple: 'text-purple-500 hover:bg-purple-50',
+    slate:  'text-slate-500 hover:bg-slate-100',
+    red:    'text-red-500 hover:bg-red-50',
+  }
+  return (
+    <button onClick={onClick} title={title}
+      className={`w-7 h-7 flex items-center justify-center rounded-lg transition-colors ${colors[color]}`}>
+      <Icon size={14} />
+    </button>
   )
 }

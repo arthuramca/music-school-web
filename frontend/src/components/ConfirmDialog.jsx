@@ -1,15 +1,21 @@
+import { AlertTriangle } from 'lucide-react'
+
 export default function ConfirmDialog({ message, onConfirm, onCancel }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-sm space-y-4">
-        <p className="text-gray-700">{message}</p>
-        <div className="flex gap-3 justify-end">
-          <button onClick={onCancel} className="px-4 py-2 border rounded-lg text-gray-600 hover:bg-gray-50 text-sm">
-            Cancelar
-          </button>
-          <button onClick={onConfirm} className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 text-sm font-medium">
-            Confirmar
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 space-y-4">
+        <div className="flex items-start gap-4">
+          <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <AlertTriangle size={20} className="text-red-500" />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-800 text-sm">Confirmar ação</h3>
+            <p className="text-slate-500 text-sm mt-1">{message}</p>
+          </div>
+        </div>
+        <div className="flex gap-3 justify-end pt-2">
+          <button onClick={onCancel} className="btn-secondary">Cancelar</button>
+          <button onClick={onConfirm} className="btn-danger">Excluir</button>
         </div>
       </div>
     </div>

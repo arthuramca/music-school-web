@@ -1,20 +1,19 @@
 import { useState, useEffect } from 'react'
+import { Plus, Pencil, Trash2, Clock } from 'lucide-react'
 import api from '../api/client'
 import ConfirmDialog from '../components/ConfirmDialog'
 
-const INSTRUMENTS = ['Violão','Guitarra','Baixo','Bateria','Piano','Teclado',
-  'Flauta','Violino','Canto','Percussão','Outro']
-const DAYS = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado']
+const INSTRUMENTS = ['Violão','Guitarra','Baixo','Bateria','Piano','Teclado','Flauta','Violino','Canto','Percussão','Outro']
+const DAYS   = ['Segunda','Terça','Quarta','Quinta','Sexta','Sábado']
 const STATUS = ['Aguardando','Contatado','Matriculado','Desistiu']
+const empty  = { name:'', phone:'', email:'', instrument:'', preferredDay:'', preferredTime:'', notes:'' }
 
-const empty = { name:'', phone:'', email:'', instrument:'', preferredDay:'', preferredTime:'', notes:'' }
-
-const statusColor = s => ({
-  Aguardando:  'bg-yellow-100 text-yellow-700',
-  Contatado:   'bg-blue-100 text-blue-700',
-  Matriculado: 'bg-green-100 text-green-700',
-  Desistiu:    'bg-gray-100 text-gray-600',
-}[s] ?? '')
+const statusBadge = s => ({
+  Aguardando:  'badge-yellow',
+  Contatado:   'badge-blue',
+  Matriculado: 'badge-green',
+  Desistiu:    'badge-gray',
+}[s] ?? 'badge-gray')
 
 export default function Waitlist() {
   const [list, setList]       = useState([])
@@ -22,114 +21,134 @@ export default function Waitlist() {
   const [editing, setEditing] = useState(null)
   const [confirm, setConfirm] = useState(null)
   const [filter, setFilter]   = useState('Todos')
+  const [open, setOpen]       = useState(false)
 
   useEffect(() => { load() }, [])
 
   async function load() {
-    const { data } = await api.get('/waitlist')
-    setList(data)
+    const { data } = await api.get('/waitlist'); setList(data)
   }
 
   async function save() {
     if (editing) await api.put(`/waitlist/${editing}`, form)
     else          await api.post('/waitlist', form)
-    setForm(empty); setEditing(null); load()
+    setForm(empty); setEditing(null); setOpen(false); load()
   }
 
   async function updateStatus(id, status) {
     await api.patch(`/waitlist/${id}/status`, { status }); load()
   }
 
-  async function remove(id) {
-    await api.delete(`/waitlist/${id}`); setConfirm(null); load()
-  }
-
   function startEdit(e) {
     setEditing(e.id)
-    setForm({ name: e.name, phone: e.phone ?? '', email: e.email ?? '',
-              instrument: e.instrument ?? '', preferredDay: e.preferredDay ?? '',
-              preferredTime: e.preferredTime ?? '', notes: e.notes ?? '' })
+    setForm({ name:e.name, phone:e.phone??'', email:e.email??'', instrument:e.instrument??'',
+              preferredDay:e.preferredDay??'', preferredTime:e.preferredTime??'', notes:e.notes??'' })
+    setOpen(true)
   }
 
   const inp = k => ({ value: form[k], onChange: ev => setForm(f => ({ ...f, [k]: ev.target.value })) })
-  const cls = "border rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 w-full"
-
   const filtered = filter === 'Todos' ? list : list.filter(e => e.status === filter)
 
   return (
-    <div className="space-y-4">
-      {confirm && <ConfirmDialog message="Remover da fila?" onCancel={() => setConfirm(null)} onConfirm={() => remove(confirm)} />}
+    <div className="space-y-6">
+      {confirm && <ConfirmDialog message="Remover desta fila?" onCancel={() => setConfirm(null)} onConfirm={async () => { await api.delete(`/waitlist/${confirm}`); setConfirm(null); load() }} />}
 
-      <div className="flex items-center gap-3">
-        <h2 className="text-xl font-bold text-gray-800 flex-1">Fila de Espera</h2>
-        <select className="border rounded-lg px-3 py-1.5 text-sm" value={filter} onChange={e => setFilter(e.target.value)}>
-          <option>Todos</option>
-          {STATUS.map(s => <option key={s}>{s}</option>)}
-        </select>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Fila de Espera</h1>
+          <p className="text-slate-500 text-sm mt-0.5">{list.filter(e => e.status === 'Aguardando').length} aguardando vaga</p>
+        </div>
+        <button onClick={() => { setEditing(null); setForm(empty); setOpen(true) }} className="btn-primary">
+          <Plus size={16} /> Adicionar
+        </button>
       </div>
 
-      <div className="bg-white rounded-xl shadow p-4 space-y-3">
-        <p className="text-sm font-semibold text-gray-600">{editing ? 'Editar entrada' : 'Nova entrada'}</p>
-        <div className="grid grid-cols-4 gap-3">
-          <input className={cls} placeholder="Nome *" {...inp('name')} />
-          <input className={cls} placeholder="Telefone" {...inp('phone')} />
-          <input className={cls} placeholder="Email" {...inp('email')} />
-          <select className={cls} {...inp('instrument')}>
-            <option value="">Instrumento</option>
-            {INSTRUMENTS.map(i => <option key={i}>{i}</option>)}
-          </select>
-          <select className={cls} {...inp('preferredDay')}>
-            <option value="">Dia preferido</option>
-            {DAYS.map(d => <option key={d}>{d}</option>)}
-          </select>
-          <input className={cls} placeholder="Horário preferido" {...inp('preferredTime')} />
-          <input className={`${cls} col-span-2`} placeholder="Observações" {...inp('notes')} />
+      {/* Form panel */}
+      {open && (
+        <div className="card p-5 space-y-4 border-l-4 border-blue-500">
+          <h3 className="font-semibold text-slate-700 text-sm">{editing ? 'Editar entrada' : 'Nova entrada'}</h3>
+          <div className="grid grid-cols-4 gap-3">
+            <input className="input" placeholder="Nome *" {...inp('name')} />
+            <input className="input" placeholder="Telefone" {...inp('phone')} />
+            <input className="input" placeholder="Email" {...inp('email')} />
+            <select className="input" {...inp('instrument')}>
+              <option value="">Instrumento</option>
+              {INSTRUMENTS.map(i => <option key={i}>{i}</option>)}
+            </select>
+            <select className="input" {...inp('preferredDay')}>
+              <option value="">Dia preferido</option>
+              {DAYS.map(d => <option key={d}>{d}</option>)}
+            </select>
+            <input className="input" placeholder="Horário preferido" {...inp('preferredTime')} />
+            <input className="input col-span-2" placeholder="Observações" {...inp('notes')} />
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button onClick={() => setOpen(false)} className="btn-secondary">Cancelar</button>
+            <button onClick={save} disabled={!form.name} className="btn-primary disabled:opacity-40">
+              {editing ? 'Atualizar' : 'Salvar'}
+            </button>
+          </div>
         </div>
-        <div className="flex gap-2 justify-end">
-          {editing && <button onClick={() => { setEditing(null); setForm(empty) }} className="border px-4 py-1.5 rounded-lg text-sm text-gray-600 hover:bg-gray-50">Cancelar</button>}
-          <button onClick={save} disabled={!form.name} className="bg-blue-500 text-white px-5 py-1.5 rounded-lg text-sm hover:bg-blue-600 font-medium disabled:opacity-40">
-            {editing ? 'Atualizar' : 'Adicionar'}
+      )}
+
+      {/* Filter tabs */}
+      <div className="flex gap-1">
+        {['Todos', ...STATUS].map(s => (
+          <button key={s} onClick={() => setFilter(s)}
+            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              filter === s ? 'bg-blue-600 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+            }`}>
+            {s}
           </button>
-        </div>
+        ))}
       </div>
 
-      <div className="bg-white rounded-xl shadow overflow-hidden">
-        <table className="w-full text-sm">
-          <thead className="bg-[#2c3e50] text-white">
+      <div className="card overflow-hidden">
+        <table className="w-full">
+          <thead className="border-b border-slate-200 bg-slate-50">
             <tr>
-              {['Nome','Contato','Instrumento','Dia/Hora','Status','Data','Ações'].map(h => (
-                <th key={h} className="px-4 py-2 text-left text-xs">{h}</th>
-              ))}
+              <th className="th">Nome</th>
+              <th className="th">Contato</th>
+              <th className="th">Instrumento</th>
+              <th className="th">Preferência</th>
+              <th className="th">Status</th>
+              <th className="th">Data</th>
+              <th className="th text-right">Ações</th>
             </tr>
           </thead>
-          <tbody>
-            {filtered.map((e, i) => (
-              <tr key={e.id} className={`border-t ${i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}`}>
-                <td className="px-4 py-2 font-medium">{e.name}</td>
-                <td className="px-4 py-2 text-xs text-gray-600">{e.phone}<br />{e.email}</td>
-                <td className="px-4 py-2">{e.instrument || '-'}</td>
-                <td className="px-4 py-2 text-xs">{e.preferredDay} {e.preferredTime}</td>
-                <td className="px-4 py-2">
-                  <select
-                    value={e.status}
-                    onChange={ev => updateStatus(e.id, ev.target.value)}
-                    className={`text-xs font-medium px-2 py-0.5 rounded-full border-0 focus:ring-1 ${statusColor(e.status)}`}
-                  >
+          <tbody className="divide-y divide-slate-100">
+            {filtered.map(e => (
+              <tr key={e.id} className="hover:bg-slate-50 transition-colors group">
+                <td className="td font-semibold text-slate-800">{e.name}</td>
+                <td className="td text-xs text-slate-500">
+                  {e.phone && <p>{e.phone}</p>}
+                  {e.email && <p className="text-slate-400">{e.email}</p>}
+                </td>
+                <td className="td">{e.instrument ? <span className="badge-blue">{e.instrument}</span> : <span className="text-slate-400">—</span>}</td>
+                <td className="td text-xs text-slate-500">{e.preferredDay} {e.preferredTime}</td>
+                <td className="td">
+                  <select value={e.status} onChange={ev => updateStatus(e.id, ev.target.value)}
+                    className="text-xs border-0 bg-transparent focus:ring-0 cursor-pointer font-medium text-slate-700 p-0">
                     {STATUS.map(s => <option key={s}>{s}</option>)}
                   </select>
                 </td>
-                <td className="px-4 py-2 text-xs text-gray-400">{e.requestDate}</td>
-                <td className="px-4 py-2 flex gap-1">
-                  <button onClick={() => startEdit(e)} className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200">Editar</button>
-                  <button onClick={() => setConfirm(e.id)} className="text-xs px-2 py-1 bg-red-100 text-red-600 rounded hover:bg-red-200">Remover</button>
+                <td className="td text-xs text-slate-400">{e.requestDate}</td>
+                <td className="td">
+                  <div className="flex items-center gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button onClick={() => startEdit(e)} className="w-7 h-7 flex items-center justify-center rounded-lg text-blue-500 hover:bg-blue-50 transition-colors"><Pencil size={13} /></button>
+                    <button onClick={() => setConfirm(e.id)} className="w-7 h-7 flex items-center justify-center rounded-lg text-red-500 hover:bg-red-50 transition-colors"><Trash2 size={13} /></button>
+                  </div>
                 </td>
               </tr>
             ))}
-            {filtered.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400">Fila vazia.</td></tr>
-            )}
           </tbody>
         </table>
+        {filtered.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-16 text-slate-400 space-y-2">
+            <Clock size={32} className="text-slate-300" />
+            <p className="text-sm">Fila vazia</p>
+          </div>
+        )}
       </div>
     </div>
   )
