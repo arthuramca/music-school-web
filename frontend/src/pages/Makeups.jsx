@@ -6,60 +6,48 @@ export default function Makeups() {
   const [makeups, setMakeups] = useState([])
   const [loading, setLoading] = useState(true)
 
-  async function load() {
-    const { data } = await api.get('/makeups/pending')
-    setMakeups(data); setLoading(false)
-  }
+  async function load() { const {data}=await api.get('/makeups/pending'); setMakeups(data); setLoading(false) }
+  useEffect(()=>{load()},[])
 
-  useEffect(() => { load() }, [])
+  async function confirm(id) { await api.post(`/makeups/${id}/confirm`); load() }
+  async function cancel(id)  { if(window.confirm('Cancelar reposição?')){ await api.delete(`/makeups/${id}`); load() } }
 
-  async function confirm(id) {
-    await api.post(`/makeups/${id}/confirm`); load()
-  }
-
-  async function cancel(id) {
-    if (window.confirm('Cancelar esta reposição?')) { await api.delete(`/makeups/${id}`); load() }
-  }
+  const rowStyle = {borderBottom:'1px solid rgba(255,255,255,0.04)'}
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-800">Reposições</h1>
-        <p className="text-slate-500 text-sm mt-0.5">{makeups.length} reposição(ões) pendente(s)</p>
-      </div>
+      <div><h1 className="page-title">Reposições</h1><p className="page-subtitle">{makeups.length} pendente(s)</p></div>
 
       <div className="card overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-16 text-slate-400 text-sm">Carregando...</div>
-        ) : (
+        {loading?(
+          <div className="flex items-center justify-center py-16 text-slate-600 text-sm">Carregando...</div>
+        ):(
           <table className="w-full">
-            <thead className="border-b border-slate-200 bg-slate-50">
-              <tr>
-                <th className="th">Aluno</th>
-                <th className="th">Data Agendada</th>
-                <th className="th">Dia / Hora</th>
-                <th className="th">Observações</th>
+            <thead>
+              <tr style={{borderBottom:'1px solid rgba(255,255,255,0.06)',background:'rgba(255,255,255,0.03)'}}>
+                <th className="th">Aluno</th><th className="th">Data</th>
+                <th className="th">Dia / Hora</th><th className="th">Observações</th>
                 <th className="th text-right">Ações</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
-              {makeups.map(m => (
-                <tr key={m.id} className="hover:bg-slate-50 transition-colors">
-                  <td className="td font-semibold text-slate-800">{m.student?.name}</td>
-                  <td className="td text-slate-600">{m.scheduledDate || <span className="text-slate-400">—</span>}</td>
-                  <td className="td">
-                    <span className="badge-blue">{m.dayOfWeek} {m.slotTime}</span>
-                  </td>
-                  <td className="td text-slate-500 text-xs">{m.notes || '—'}</td>
+            <tbody>
+              {makeups.map(m=>(
+                <tr key={m.id} style={rowStyle}
+                  onMouseEnter={e=>e.currentTarget.style.background='rgba(255,255,255,0.02)'}
+                  onMouseLeave={e=>e.currentTarget.style.background=''}>
+                  <td className="td font-semibold text-white">{m.student?.name}</td>
+                  <td className="td text-slate-400">{m.scheduledDate||'—'}</td>
+                  <td className="td"><span className="badge-blue">{m.dayOfWeek} {m.slotTime}</span></td>
+                  <td className="td text-slate-500 text-xs">{m.notes||'—'}</td>
                   <td className="td">
                     <div className="flex items-center gap-2 justify-end">
-                      <button onClick={() => confirm(m.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-medium transition-colors">
-                        <CheckCircle size={13} /> Confirmar
+                      <button onClick={()=>confirm(m.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-all border border-emerald-500/20">
+                        <CheckCircle size={12}/>Confirmar
                       </button>
-                      <button onClick={() => cancel(m.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 text-red-500 hover:bg-red-100 rounded-lg text-xs font-medium transition-colors">
-                        <XCircle size={13} /> Cancelar
+                      <button onClick={()=>cancel(m.id)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all border border-red-500/20">
+                        <XCircle size={12}/>Cancelar
                       </button>
                     </div>
                   </td>
@@ -68,10 +56,9 @@ export default function Makeups() {
             </tbody>
           </table>
         )}
-        {!loading && makeups.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-slate-400 space-y-2">
-            <RefreshCw size={32} className="text-slate-300" />
-            <p className="text-sm">Nenhuma reposição pendente</p>
+        {!loading&&makeups.length===0&&(
+          <div className="flex flex-col items-center justify-center py-16 text-slate-700 gap-3">
+            <RefreshCw size={36}/><p className="text-sm">Nenhuma reposição pendente</p>
           </div>
         )}
       </div>

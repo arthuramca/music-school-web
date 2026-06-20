@@ -3,33 +3,65 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    --accent: #7c3aed;
+    --accent2: #2563eb;
+    --glow: rgba(124, 58, 237, 0.25);
+  }
   body {
     font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
-    @apply bg-slate-100 text-slate-800;
+    background-color: #05050f;
+    color: #e2e8f0;
   }
+  * { scrollbar-width: thin; scrollbar-color: #252555 #05050f; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: #05050f; }
+  ::-webkit-scrollbar-thumb { background: #252555; border-radius: 3px; }
 }
 
 @layer components {
-  .btn-primary {
-    @apply bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2 disabled:opacity-50;
+  /* Card — glass morphism */
+  .card {
+    @apply rounded-2xl border border-white/[0.07] bg-white/[0.04] backdrop-blur-sm;
   }
+  .card-glow {
+    @apply card;
+    box-shadow: 0 0 40px rgba(124,58,237,0.08), inset 0 1px 0 rgba(255,255,255,0.06);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    @apply flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, #7c3aed, #2563eb);
+    box-shadow: 0 4px 20px rgba(124,58,237,0.3);
+  }
+  .btn-primary:hover { box-shadow: 0 4px 28px rgba(124,58,237,0.5); filter: brightness(1.1); }
+
   .btn-secondary {
-    @apply border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-medium px-4 py-2 rounded-lg transition-colors flex items-center gap-2;
+    @apply flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium text-slate-300 border border-white/10 bg-white/[0.05] hover:bg-white/[0.09] transition-all;
   }
   .btn-danger {
-    @apply bg-red-500 hover:bg-red-600 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors;
+    @apply flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all;
+    background: linear-gradient(135deg, #dc2626, #991b1b);
   }
+
+  /* Input */
   .input {
-    @apply border border-slate-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-full bg-white transition-shadow;
+    @apply w-full rounded-xl px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 bg-white/[0.05] border border-white/[0.08] focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/30 transition-all;
   }
-  .card {
-    @apply bg-white rounded-2xl shadow-sm border border-slate-200;
-  }
-  .badge-green  { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700; }
-  .badge-gray   { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600; }
-  .badge-yellow { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700; }
-  .badge-blue   { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700; }
-  .badge-red    { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-600; }
+
+  /* Table */
   .th { @apply px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider; }
-  .td { @apply px-4 py-3 text-sm text-slate-700; }
+  .td { @apply px-4 py-3 text-sm text-slate-300; }
+
+  /* Badges */
+  .badge-green  { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/20; }
+  .badge-gray   { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-500/15 text-slate-400 ring-1 ring-slate-500/20; }
+  .badge-yellow { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/20; }
+  .badge-blue   { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 ring-1 ring-blue-500/20; }
+  .badge-red    { @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-red-500/15 text-red-400 ring-1 ring-red-500/20; }
+
+  /* Page header */
+  .page-title   { @apply text-2xl font-bold text-white; }
+  .page-subtitle{ @apply text-sm text-slate-500 mt-0.5; }
 }
